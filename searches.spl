@@ -1,0 +1,35 @@
+# BOTS v1 web server compromise: every search used, in order.
+# Run with the Splunk time range set to "All time" (the data is from 2016).
+
+# 1. Which logs mention the website
+index=botsv1 imreallynotbatman.com | stats count by sourcetype
+
+# 2. Top source IPs (the scanner)
+index=botsv1 sourcetype=stream:http imreallynotbatman.com | stats count by src_ip | sort -count
+
+# 2b. Scanner fingerprint in the User-Agent field
+index=botsv1 sourcetype=stream:http src_ip=40.80.148.42 | stats count by http_user_agent | sort -count
+
+# 3. Target server
+index=botsv1 sourcetype=stream:http src_ip=40.80.148.42 | stats count by dest_ip | sort -count
+
+# 4. Login page under brute force
+index=botsv1 sourcetype=stream:http dest_ip=192.168.250.70 http_method=POST | stats count by src_ip, uri_path | sort -count
+
+# 5. Password that worked (used by more than one IP)
+index=botsv1 sourcetype=stream:http http_method=POST uri_path="/joomla/administrator/index.php" form_data=*passwd* | rex field=form_data "passwd=(?<password>[^&]+)" | stats count values(src_ip) as src_ips by password | where count>1
+
+# 6. Uploaded files
+index=botsv1 sourcetype=stream:http dest_ip=192.168.250.70 http_method=POST part_filename* | table _time src_ip uri_path part_filename*
+
+# 7a. Where does 3791.exe appear
+index=botsv1 3791.exe | stats count by sourcetype
+
+# 7b. Did 3791.exe run (Sysmon process creation, fields extracted from XML)
+index=botsv1 sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" 3791.exe | rex "<EventID>(?<EventID>\d+)</EventID>" | rex "<Data Name=.Image.>(?<Image>[^<]+)" | rex "<Data Name=.ParentImage.>(?<ParentImage>[^<]+)" | rex "<Data Name=.CommandLine.>(?<CommandLine>[^<]+)" | search EventID=1 | table _time host Image ParentImage CommandLine
+
+# 8. Defacement image downloaded by the web server
+index=botsv1 src_ip=192.168.250.70 jpeg | table _time sourcetype dest_ip site url uri_path
+
+# Detection: more than 20 admin login attempts from one IP in 5 minutes
+index=botsv1 sourcetype=stream:http http_method=POST uri_path="*/administrator/index.php" | bin _time span=5m | stats count by _time, src_ip | where count > 20

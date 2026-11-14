@@ -1,0 +1,6 @@
+# Never commit Splunk data or datasets
+*.tgz
+*.tar.gz
+*.zip
+botsv1_data_set/
+.DS_Store

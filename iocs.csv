@@ -1,0 +1,9 @@
+type,value,role,first_seen_utc,source
+ip,40.80.148[.]42,Acunetix scanner; admin login; uploads,2016-08-10 22:41,stream:http; suricata
+ip,23.22.63[.]114,admin password brute force; hosts defacement image,2016-08-10 22:45,stream:http
+domain,prankglassinebracket.jumpingcrab[.]com,defacement image host (port 1337),2016-08-10 23:06,stream:http
+url,hxxp://prankglassinebracket.jumpingcrab[.]com:1337/poisonivy-is-coming-for-you-batman.jpeg,defacement image,2016-08-10 23:06,stream:http
+file,3791.exe,malware uploaded and executed on we1149srv,2016-08-10 22:52,stream:http; sysmon
+file,agent.php,web shell uploaded through Joomla admin,2016-08-10 22:50,stream:http
+file,eXtplorer_2.1.5.zip,file manager add-on installed by attacker,2016-08-10 22:51,stream:http
+credential,admin / batman,compromised Joomla admin password,2016-08-10 22:45,stream:http
