@@ -4,3 +4,4 @@
 *.zip
 botsv1_data_set/
 .DS_Store
+.idea/
