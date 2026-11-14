@@ -55,6 +55,8 @@ index=botsv1 sourcetype=stream:http src_ip=40.80.148.42 | stats count by http_us
 ```
 The scanner posed as a Chrome browser, but also injected test payloads into the User-Agent field: SQL injection (`sleep(9)`), command injection (`$(nslookup …)`), and code injection marked `acunetix_wvs_security_test`. That identifies **Acunetix** (WVS = Web Vulnerability Scanner).
 
+![Scanner payloads in the User-Agent field](img/01-scanner-payloads.png)
+
 ### 3. Which server was targeted?
 ```
 index=botsv1 sourcetype=stream:http src_ip=40.80.148.42 | stats count by dest_ip | sort -count
@@ -74,6 +76,8 @@ index=botsv1 sourcetype=stream:http http_method=POST uri_path="/joomla/administr
 | stats count values(src_ip) as src_ips by password | where count>1
 ```
 `rex` extracts the password from the login form. One password was used twice: **`batman`**, by `23.22.63[.]114` (which guessed it) and `40.80.148[.]42` (which logged in with it). This links both IPs to the same attacker.
+
+![Password used by both attacker IPs](img/02-password-batman.png)
 
 ### 6. What was uploaded?
 ```
@@ -98,6 +102,8 @@ index=botsv1 sourcetype="XmlWinEventLog:Microsoft-Windows-Sysmon/Operational" 37
 ```
 Sysmon Event ID 1 (process creation) shows `php-cgi.exe` (the website's PHP engine) starting `cmd.exe /c "3791.exe 2>&1"`, and `3791.exe` running from the web folder. A website launching a command prompt is the sign of a web shell. The network showed the file arrived; Sysmon proves it executed, and the parent process shows how.
 
+![Sysmon process chain: php-cgi.exe to cmd.exe to 3791.exe](img/03-sysmon-3791-executed.png)
+
 ### 8. Where did the defacement image come from?
 ```
 index=botsv1 src_ip=192.168.250.70 jpeg | table _time sourcetype dest_ip site url uri_path
@@ -113,6 +119,8 @@ index=botsv1 sourcetype=stream:http http_method=POST uri_path="*/administrator/i
 | where count > 20
 ```
 Alerts when one IP sends more than 20 login attempts in 5 minutes.
+
+![Detection result: one IP, 412 attempts in one 5-minute window](img/04-detection-bruteforce.png)
 
 | Test | Result |
 | --- | --- |
